@@ -1,10 +1,4 @@
-from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-  
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-import time
 import json
 
 url = "https://www.amazon.com/"
@@ -12,7 +6,7 @@ ASIN = "B07QXV6N1B"
 
 
 options = webdriver.ChromeOptions()  # initializing the chrome options
-# options.add_argument("--headless")   # to run in the background
+options.add_argument("--headless")   # to run in the background
 options.add_argument("--incognito ") # to run in incognito mode
 driver = webdriver.Chrome('chromedriver.exe', options = options)
 
@@ -46,50 +40,34 @@ class AmazonReviewsScraper: # this class is used to scrape the data
         while condition:
             reviews = driver.find_elements_by_xpath("//div[@class='a-section celwidget']")
 
-            for count, review in enumerate(reviews):
-                # review_title = review.find_element_by_xpath(".//a[@data-hook ='review-title']/span").text
-                # review_body = review.find_element_by_xpath(".//span[@data-hook ='review-body']/span").text
-                # star_rating = review.find_element_by_xpath(".//span[@class ='a-icon-alt']").get_attribute("innerHTML")
-                # buyer_name = review.find_element_by_xpath(".//span[@class ='a-profile-name']").text
-                # buyer_profile = review.find_element_by_xpath(".//a[@class ='a-profile']").get_attribute('href')
+            for review in reviews:
+                try:
+                    review_title = review.find_element_by_xpath(".//a[@data-hook ='review-title']/span").text
+                except:
+                    review_title = review.find_element_by_xpath(".//span[@data-hook ='review-title']/span").text
+                review_body = review.find_element_by_xpath(".//span[@data-hook ='review-body']/span").text
+                star_rating = review.find_element_by_xpath(".//span[@class ='a-icon-alt']").get_attribute("innerHTML")
+                buyer_name = review.find_element_by_xpath(".//span[@class ='a-profile-name']").text
+                try:
+                    buyer_profile = review.find_element_by_xpath(".//a[@class ='a-profile']").get_attribute('href')
+                except: 
+                    buyer_profile = "Not Available"
 
-                review_title = WebDriverWait(review, 15).until(
-                                        EC.presence_of_element_located((By.XPATH, ".//a[@data-hook ='review-title']/span"))).text
-
-                review_body = WebDriverWait(review, 15).until(
-                                        EC.presence_of_element_located((By.XPATH, ".//span[@data-hook ='review-body']/span"))).text
-
-                star_rating = WebDriverWait(review, 15).until(
-                                        EC.presence_of_element_located((By.XPATH, ".//span[@class ='a-icon-alt']"))).get_attribute("innerHTML")
-                
-                buyer_name = WebDriverWait(review, 15).until(
-                                        EC.presence_of_element_located((By.XPATH, ".//span[@class ='a-profile-name']"))).text
-                
-                buyer_profile = WebDriverWait(review, 15).until(
-                                        EC.presence_of_element_located((By.XPATH, ".//a[@class ='a-profile']"))).get_attribute('href')
-
-
-
-
-                review_data = { "review #" + str(count+1):[
+                review_data = [
                         {"Title": review_title},
-                        {"Body":review_body}, 
-                        {"Rating":star_rating}, 
-                        {"Buyer":buyer_name},
-                        {"Buyer Profile":buyer_profile}
-                        ]}
+                        {"Body": review_body}, 
+                        {"Rating": star_rating}, 
+                        {"Buyer": buyer_name},
+                        {"Buyer Profile": buyer_profile}
+                        ]
                 data.append(review_data)
             try: 
                 new_url = driver.find_element_by_xpath(".//li[@class ='a-last']/a").get_attribute('href')
-                print(new_url)
                 print('sucess loop')
                 driver.get(new_url)
             except: 
-                print('exit loop')
+                print('LAST PAGE')
                 condition = False
-            if len(reviews) == 1:
-                condition = False
-            condition = False
         return data
 
 
